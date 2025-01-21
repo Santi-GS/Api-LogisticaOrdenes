@@ -63,4 +63,53 @@ router.delete('/ordenes/:id', async (req, res) => {
     }
 });
 
+// Obtener todas las órdenes con filtros avanzados
+router.get('/ordenes/buscar', async (req, res) => {
+    try {
+        const { destino, fechaInicio, fechaFin, estado } = req.query;
+        
+        // Crear un objeto de filtro dinámico
+        const filtro = {};
+        if (destino) filtro.destino = { $regex: destino, $options: 'i' }; // Coincidencia parcial sin importar mayúsculas
+        if (estado) filtro.estado = estado;
+        if (fechaInicio || fechaFin) {
+            filtro.fecha_creacion = {};
+            if (fechaInicio) filtro.fecha_creacion.$gte = new Date(fechaInicio);
+            if (fechaFin) filtro.fecha_creacion.$lte = new Date(fechaFin);
+        }
+        
+        const ordenes = await Orden.find(filtro);
+        res.status(200).send(ordenes);
+    } catch (error) {
+        res.status(500).send({ mensaje: 'Error al buscar las órdenes', error });
+    }
+});
+
+// Cambiar estado de una orden
+router.patch('/ordenes/:id/estado', async (req, res) => {
+    try {
+        const { nuevoEstado } = req.body;
+
+        // Validar nuevo estado
+        const estadosValidos = ['Pendiente', 'En tránsito', 'Entregado'];
+        if (!estadosValidos.includes(nuevoEstado)) {
+            return res.status(400).send({ mensaje: 'Estado no válido' });
+        }
+
+        const ordenActualizada = await Orden.findByIdAndUpdate(
+            req.params.id,
+            { estado: nuevoEstado },
+            { new: true, runValidators: true }
+        );
+
+        if (!ordenActualizada) {
+            return res.status(404).send({ mensaje: 'Orden no encontrada' });
+        }
+
+        res.status(200).send(ordenActualizada);
+    } catch (error) {
+        res.status(400).send({ mensaje: 'Error al actualizar el estado de la orden', error });
+    }
+});
+
 module.exports = router;
