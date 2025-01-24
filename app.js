@@ -19,9 +19,4 @@ dbconnect().then(() => {
     console.error('Error al conectar la base de datos:', err);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor funcionando en http://localhost:${PORT}`);
-});
-
 module.exports = app;
