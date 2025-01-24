@@ -48,10 +48,15 @@ Estructura del Proyecto
 El proyecto está organizado de la siguiente manera:
 
 api-logistica/
+
 ├── models/         # Modelos de datos (Mongoose)
+
 ├── routes/         # Rutas de la API
+
 ├── app.js          # Configuración principal
+
 ├── .env            # Variables de entorno
+
 ├── package.json    # Dependencias y scripts
 
 API Endpoints
@@ -61,10 +66,6 @@ Método
 Endpoint
 
 Descripción:
-
-POST: /api/auth/login
-
-(Inicio de sesión de usuario)
 
 POST: /api/ordenes
 
@@ -86,20 +87,21 @@ DELETE: /api/ordenes/:id
 
 (Eliminar una orden)
 
-POST: /api/clientes
+GET: /api/ordenes/buscar
 
-(Registrar un nuevo cliente)
+(Filtrar ordenes por destino, estado)
 
-GET: /api/clientes
+PATCH: /api/ordenes/:id/estado
 
-(Listar todos los clientes)
-
+(Cambiar estado de orden a ['Pendiente', 'En tránsito', 'Entregado'])
 
 Créditos
 
 Este proyecto fue desarrollado por Santiago Gómez. Puedes visitar mi perfil en GitHub para más proyectos https://github.com/Santi-GS.
 
-Despliegue
+Despliegue:
+
+El proyecto se encuentra funcionando en la plataforma de vercel y permite acceso libre a cualquier usuario.
 
 https://api-logistica-ordenes.vercel.app/
 
