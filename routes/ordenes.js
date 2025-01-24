@@ -14,6 +14,40 @@ router.get('/ordenes', async (req, res) => {
     }
 });
 
+// Obtener todas las órdenes con filtros avanzados
+router.get('/ordenes/buscar', async (req, res) => {
+    try {
+        const { destino, fechaInicio, fechaFin, estado } = req.query;
+        const filtro = {};
+
+        if (destino) filtro.destino = { $regex: destino, $options: 'i' };
+        if (estado) filtro.estado = estado;
+
+        if (fechaInicio || fechaFin) {
+            filtro.fecha_creacion = {};
+            if (fechaInicio) {
+                const inicio = new Date(fechaInicio);
+                if (isNaN(inicio.getTime())) {
+                    return res.status(400).send({ mensaje: 'Fecha de inicio inválida' });
+                }
+                filtro.fecha_creacion.$gte = inicio;
+            }
+            if (fechaFin) {
+                const fin = new Date(fechaFin);
+                if (isNaN(fin.getTime())) {
+                    return res.status(400).send({ mensaje: 'Fecha de fin inválida' });
+                }
+                filtro.fecha_creacion.$lte = fin;
+            }
+        }
+
+        const ordenes = await Orden.find(filtro);
+        res.status(200).send({ mensaje: 'Búsqueda realizada', ordenes });
+    } catch (error) {
+        res.status(500).send({ mensaje: 'Error al buscar las órdenes', error: error.message });
+    }
+});
+
 // Obtener una orden por ID
 router.get('/ordenes/:id', async (req, res) => {
     try {
@@ -63,39 +97,18 @@ router.delete('/ordenes/:id', async (req, res) => {
     }
 });
 
-// Obtener todas las órdenes con filtros avanzados
-router.get('/ordenes/buscar', async (req, res) => {
-    try {
-        const { destino, fechaInicio, fechaFin, estado } = req.query;
-        
-        // Crear un objeto de filtro dinámico
-        const filtro = {};
-        if (destino) filtro.destino = { $regex: destino, $options: 'i' }; // Coincidencia parcial sin importar mayúsculas
-        if (estado) filtro.estado = estado;
-        if (fechaInicio || fechaFin) {
-            filtro.fecha_creacion = {};
-            if (fechaInicio) filtro.fecha_creacion.$gte = new Date(fechaInicio);
-            if (fechaFin) filtro.fecha_creacion.$lte = new Date(fechaFin);
-        }
-        
-        const ordenes = await Orden.find(filtro);
-        res.status(200).send(ordenes);
-    } catch (error) {
-        res.status(500).send({ mensaje: 'Error al buscar las órdenes', error });
-    }
-});
-
 // Cambiar estado de una orden
 router.patch('/ordenes/:id/estado', async (req, res) => {
     try {
         const { nuevoEstado } = req.body;
 
-        // Validar nuevo estado
+        // Validar estado
         const estadosValidos = ['Pendiente', 'En tránsito', 'Entregado'];
         if (!estadosValidos.includes(nuevoEstado)) {
-            return res.status(400).send({ mensaje: 'Estado no válido' });
+            return res.status(400).send({ mensaje: 'Estado no válido. Estados válidos: Pendiente, En tránsito, Entregado' });
         }
 
+        // Actualizar el estado de la orden
         const ordenActualizada = await Orden.findByIdAndUpdate(
             req.params.id,
             { estado: nuevoEstado },
@@ -106,10 +119,12 @@ router.patch('/ordenes/:id/estado', async (req, res) => {
             return res.status(404).send({ mensaje: 'Orden no encontrada' });
         }
 
-        res.status(200).send(ordenActualizada);
+        res.status(200).send({ mensaje: 'Estado actualizado', orden: ordenActualizada });
     } catch (error) {
-        res.status(400).send({ mensaje: 'Error al actualizar el estado de la orden', error });
+        res.status(500).send({ mensaje: 'Error al actualizar el estado', error: error.message });
     }
 });
 
+
 module.exports = router;
+
